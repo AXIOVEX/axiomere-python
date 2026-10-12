@@ -21,7 +21,7 @@ jobs:
         run: |
           python -m venv .venv
           .venv/bin/pip install maturin pytest
-          VIRTUAL_ENV="$PWD/.venv" .venv/bin/maturin develop --interpreter "$PWD/.venv/bin/python" -m axiomere-core/crates/axiomere-py/Cargo.toml
-          .venv/bin/pip install -e .
+          .venv/bin/maturin build -m axiomere-core/crates/axiomere-py/Cargo.toml
+          .venv/bin/pip install axiomere-core/target/wheels/*.whl .
       - name: Run tests
         run: .venv/bin/python -m pytest -q
