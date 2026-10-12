@@ -5,3 +5,6 @@ __pycache__/
 *.egg-info/
 build/
 dist/
+
+# MkDocs build output (ReadTheDocs builds from source)
+site/
