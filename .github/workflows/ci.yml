@@ -1,0 +1,27 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check out the Rust core (bindings source)
+        uses: actions/checkout@v4
+        with:
+          repository: AXIOVEX/axiomere
+          path: axiomere-core
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build bindings + install package + test deps
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install maturin pytest
+          .venv/bin/maturin develop -m axiomere-core/crates/axiomere-py/Cargo.toml
+          .venv/bin/pip install -e .
+      - name: Run tests
+        run: .venv/bin/python -m pytest -q

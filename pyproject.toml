@@ -1,0 +1,28 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "axiomere"
+version = "0.1.0"
+description = "Python API for Axiomere — a truth ledger: append-only, signed, hash-chained records that are revised by snapshots and never deleted."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [{ name = "Axiovex Systems, LLC" }]
+keywords = ["ledger", "append-only", "provenance", "immutable", "audit"]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Rust",
+    "Topic :: Database",
+    "Topic :: Security :: Cryptography",
+]
+
+[project.urls]
+Homepage = "https://axiovexsystems.com"
+Repository = "https://github.com/AXIOVEX/axiomere-python"
+Core = "https://github.com/AXIOVEX/axiomere"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/axiomere"]
