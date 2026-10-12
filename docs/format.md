@@ -46,7 +46,8 @@ Every event carries:
   protects score-only consumers from continuing to use a dead record.
 - **Score** (epistemic weight) and **status** (lifecycle) are separate
   fields and are never conflated.
-- The **current view** is a fold — latest snapshot per record, dead
+- The **current view** is a fold — the events applied in order to
+  produce it: latest snapshot per record, dead
   excluded by default. It is a projection; producing it never alters
   the log.
 

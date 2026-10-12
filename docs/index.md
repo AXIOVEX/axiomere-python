@@ -9,7 +9,8 @@ new snapshots; withdrawal is a snapshot marked `dead`, its reason on
 the record, its score set to 0.0 — history stays fully readable.
 
 This package is the idiomatic Python API over the Rust core's PyO3
-bindings. The core implements the integrity layers; this package wraps
+bindings (the bridge that lets Python call Rust code). The core
+implements the integrity layers; this package wraps
 them without weakening them — including the defining absence:
 
 > Note what the API does not have: **no `update`, no `delete`** — in
@@ -21,7 +22,8 @@ them without weakening them — including the defining absence:
    carries `seq`, `prev_hash`, and its own hash; alteration,
    insertion, deletion, or reordering breaks verification at the
    first affected `seq`, with a named reason.
-2. **Content-addressed snapshots** with parent links — a git-like
+2. **Content-addressed snapshots** (each named by the hash of its
+   contents) with parent links — a git-like
    lineage where each snapshot's ancestry is tamper-evident
    independently of the event chain.
 3. **Ed25519 signed appends** — actor keys; the event carries the
@@ -82,7 +84,8 @@ ledger.checkpoint(actor="researcher")   # Merkle checkpoint over the range
 - [Verification](verification.md) — what `verify()` checks, and what
   a failure means.
 - [Float canonicalization](float-canonicalization.md) — the 1-ULP
-  defect that made honest ledgers fail verification, and its fix.
+  defect (off by the smallest step a float can take) that made honest
+  ledgers fail verification, and its fix.
 
 ## License
 

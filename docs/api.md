@@ -67,7 +67,8 @@ result = ledger.verify()
 ok, count, reason = axiomere.verify_file("study.axmr")   # standalone, no Database needed
 ```
 
-`Verification` is a frozen dataclass: `ok`, `events`, `break_seq`
+`Verification` is a frozen dataclass (an immutable result object):
+`ok`, `events`, `break_seq`
 (the sequence number where the chain breaks, if it does), `reason`,
 `signatures_checked`, `signatures_failed`. See
 [Verification](verification.md) for what is checked and what a
