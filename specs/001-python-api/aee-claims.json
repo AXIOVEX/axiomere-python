@@ -1,0 +1,152 @@
+{
+  "claims": [
+    {
+      "boundary": [
+        "Scope: src/axiomere public API"
+      ],
+      "evidence": [
+        {
+          "direction": "supports",
+          "kind": "observed",
+          "ref": "src/axiomere/__init__.py \u2014 full public surface (__all__ = Database, Verification, generate_keypair, verify_file)",
+          "source_quality": "artifact"
+        }
+      ],
+      "falsification_tests": [
+        "F-APY-1: any public method on Database (or module function) that mutates or removes a stored event."
+      ],
+      "id": "APY-001-01",
+      "kind": "requirement",
+      "severity": "high",
+      "source_ref": "specs/001-python-api/spec.md",
+      "status": "supported",
+      "text": "The Python API exposes no update or delete operation; the only writes are append, snapshot, dead, and checkpoint.",
+      "uncertainty": "low"
+    },
+    {
+      "boundary": [
+        "Scope: package import path"
+      ],
+      "evidence": [
+        {
+          "direction": "supports",
+          "kind": "observed",
+          "ref": "src/axiomere/__init__.py ImportError guard (lines 24-33)",
+          "source_quality": "artifact"
+        }
+      ],
+      "falsification_tests": [
+        "F-APY-2: an environment without _axiomere in which `import axiomere` succeeds, or in which a substitute store silently accepts writes."
+      ],
+      "id": "APY-001-02",
+      "kind": "requirement",
+      "severity": "high",
+      "source_ref": "specs/001-python-api/spec.md",
+      "status": "supported",
+      "text": "Without the native extension, importing axiomere fails loudly with build instructions; no pure-Python fallback implementation exists.",
+      "uncertainty": "low"
+    },
+    {
+      "boundary": [
+        "Scope: Database.open / create_with_seed / open_with_seed paths"
+      ],
+      "evidence": [
+        {
+          "direction": "supports",
+          "kind": "observed",
+          "ref": "tests/test_axiomere.py::test_broken_log_refuses_to_open",
+          "source_quality": "test"
+        },
+        {
+          "direction": "supports",
+          "kind": "observed",
+          "ref": "tests/test_axiomere.py::test_tampered_file_fails_verify_file (reason == hash-mismatch)",
+          "source_quality": "test"
+        }
+      ],
+      "falsification_tests": [
+        "F-APY-3: opening a tampered .axmr for appends without an exception, or an exception that hides the core reason."
+      ],
+      "id": "APY-001-03",
+      "kind": "requirement",
+      "severity": "high",
+      "source_ref": "specs/001-python-api/spec.md",
+      "status": "supported",
+      "text": "A ledger that fails verification refuses to open for appends, and the core's failure reason reaches Python as the error message.",
+      "uncertainty": "low"
+    },
+    {
+      "boundary": [
+        "Scope: Database.dead + current(include_dead)"
+      ],
+      "evidence": [
+        {
+          "direction": "supports",
+          "kind": "observed",
+          "ref": "tests/test_axiomere.py::test_dead_semantics",
+          "source_quality": "test"
+        }
+      ],
+      "falsification_tests": [
+        "F-APY-4: a record withdrawn via dead() that still appears in current(), or whose audit-view entry lacks status/reason/0.0."
+      ],
+      "id": "APY-001-04",
+      "kind": "requirement",
+      "severity": "high",
+      "source_ref": "specs/001-python-api/spec.md",
+      "status": "supported",
+      "text": "Dead semantics round-trip through the wrapper: withdrawn records leave the default current view and appear in the audit view with status dead, score 0.0, and their reason.",
+      "uncertainty": "low"
+    },
+    {
+      "boundary": [
+        "Scope: seed_hex construction paths"
+      ],
+      "evidence": [
+        {
+          "direction": "supports",
+          "kind": "observed",
+          "ref": "tests/test_axiomere.py::test_signed_appends_verify (signatures_checked == 1, failed == 0)",
+          "source_quality": "test"
+        }
+      ],
+      "falsification_tests": [
+        "F-APY-5: a seeded Database whose appends verify with zero signatures checked."
+      ],
+      "id": "APY-001-05",
+      "kind": "requirement",
+      "severity": "high",
+      "source_ref": "specs/001-python-api/spec.md",
+      "status": "supported",
+      "text": "With an actor seed, appends through the wrapper are Ed25519-signed and verify() reports the core's signature check counts.",
+      "uncertainty": "low"
+    },
+    {
+      "boundary": [
+        "Scope: distribution only (T107)",
+        "Not a v0.1 capability and not described as one in the README"
+      ],
+      "evidence": [
+        {
+          "direction": "supports",
+          "kind": "asserted",
+          "ref": "README.md install section (two-step build stated openly)",
+          "source_quality": "primary"
+        }
+      ],
+      "falsification_tests": [
+        "F-APY-6: a bundled-wheel design that requires API changes or a fallback store to ship."
+      ],
+      "id": "APY-001-06",
+      "kind": "prediction",
+      "severity": "high",
+      "source_ref": "specs/001-python-api/spec.md",
+      "status": "draft",
+      "text": "A future release will install with a single pip command (prebuilt wheels bundling the extension), removing the two-repo build step without changing the API.",
+      "uncertainty": "high"
+    }
+  ],
+  "date": "2026-10-12",
+  "spec": "001-python-api",
+  "version": "0.1.0"
+}

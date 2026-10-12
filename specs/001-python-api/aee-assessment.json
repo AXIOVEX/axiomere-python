@@ -1,0 +1,480 @@
+{
+  "schema_version": "1.0",
+  "methodology_version": "1.0",
+  "project": "axiomere-python",
+  "phase": "after_implement",
+  "outcome": "iterate",
+  "summary": "Assessed 6 claim(s); found 7 failure mode(s); 1 claim(s) below the 0.70 confidence threshold.",
+  "created_at": "2026-10-12T05:39:40.177045Z",
+  "claims": [
+    {
+      "id": "APY-001-01",
+      "text": "The Python API exposes no update or delete operation; the only writes are append, snapshot, dead, and checkpoint.",
+      "kind": "requirement",
+      "status": "supported",
+      "boundary": [
+        "Scope: src/axiomere public API"
+      ],
+      "depends_on": [],
+      "conflicts_with": [],
+      "evidence": [
+        {
+          "ref": "src/axiomere/__init__.py \u2014 full public surface (__all__ = Database, Verification, generate_keypair, verify_file)",
+          "kind": "observed",
+          "direction": "supports",
+          "source_quality": "artifact",
+          "description": "",
+          "source_id": "",
+          "independent_of": [],
+          "observed_at": null,
+          "content_hash": null
+        }
+      ],
+      "assumptions": [],
+      "alternatives": [],
+      "falsification_tests": [
+        "F-APY-1: any public method on Database (or module function) that mutates or removes a stored event."
+      ],
+      "uncertainty": "low",
+      "severity": "high",
+      "source_ref": "specs/001-python-api/spec.md",
+      "domain": "",
+      "confidence": 0.845,
+      "confidence_band": "high",
+      "failures": [
+        {
+          "id": "AEE-APY-001-01-IRREDUCIBILITY-CHALLENGE",
+          "claim_id": "APY-001-01",
+          "challenge": "Irreducibility challenge",
+          "breakpoint": "Claim may contain multiple independently falsifiable propositions",
+          "severity": "medium",
+          "category": "coverage_gap",
+          "recovery_hint": "Split the claim into atomic propositions and link them explicitly.",
+          "resolved": false
+        }
+      ],
+      "metadata": {}
+    },
+    {
+      "id": "APY-001-02",
+      "text": "Without the native extension, importing axiomere fails loudly with build instructions; no pure-Python fallback implementation exists.",
+      "kind": "requirement",
+      "status": "supported",
+      "boundary": [
+        "Scope: package import path"
+      ],
+      "depends_on": [],
+      "conflicts_with": [],
+      "evidence": [
+        {
+          "ref": "src/axiomere/__init__.py ImportError guard (lines 24-33)",
+          "kind": "observed",
+          "direction": "supports",
+          "source_quality": "artifact",
+          "description": "",
+          "source_id": "",
+          "independent_of": [],
+          "observed_at": null,
+          "content_hash": null
+        }
+      ],
+      "assumptions": [],
+      "alternatives": [],
+      "falsification_tests": [
+        "F-APY-2: an environment without _axiomere in which `import axiomere` succeeds, or in which a substitute store silently accepts writes."
+      ],
+      "uncertainty": "low",
+      "severity": "high",
+      "source_ref": "specs/001-python-api/spec.md",
+      "domain": "",
+      "confidence": 0.845,
+      "confidence_band": "high",
+      "failures": [
+        {
+          "id": "AEE-APY-001-02-IRREDUCIBILITY-CHALLENGE",
+          "claim_id": "APY-001-02",
+          "challenge": "Irreducibility challenge",
+          "breakpoint": "Claim may contain multiple independently falsifiable propositions",
+          "severity": "medium",
+          "category": "coverage_gap",
+          "recovery_hint": "Split the claim into atomic propositions and link them explicitly.",
+          "resolved": false
+        },
+        {
+          "id": "AEE-APY-001-02-NEGATION-CONFLICT-CHALLE",
+          "claim_id": "APY-001-02",
+          "challenge": "Negation conflict challenge",
+          "breakpoint": "APY-001-02 may contradict APY-001-06",
+          "severity": "medium",
+          "category": "contradiction",
+          "recovery_hint": "Confirm whether the claims share a boundary and preserve both pending review.",
+          "resolved": false
+        }
+      ],
+      "metadata": {}
+    },
+    {
+      "id": "APY-001-03",
+      "text": "A ledger that fails verification refuses to open for appends, and the core's failure reason reaches Python as the error message.",
+      "kind": "requirement",
+      "status": "supported",
+      "boundary": [
+        "Scope: Database.open / create_with_seed / open_with_seed paths"
+      ],
+      "depends_on": [],
+      "conflicts_with": [],
+      "evidence": [
+        {
+          "ref": "tests/test_axiomere.py::test_broken_log_refuses_to_open",
+          "kind": "observed",
+          "direction": "supports",
+          "source_quality": "test",
+          "description": "",
+          "source_id": "",
+          "independent_of": [],
+          "observed_at": null,
+          "content_hash": null
+        },
+        {
+          "ref": "tests/test_axiomere.py::test_tampered_file_fails_verify_file (reason == hash-mismatch)",
+          "kind": "observed",
+          "direction": "supports",
+          "source_quality": "test",
+          "description": "",
+          "source_id": "",
+          "independent_of": [],
+          "observed_at": null,
+          "content_hash": null
+        }
+      ],
+      "assumptions": [],
+      "alternatives": [],
+      "falsification_tests": [
+        "F-APY-3: opening a tampered .axmr for appends without an exception, or an exception that hides the core reason."
+      ],
+      "uncertainty": "low",
+      "severity": "high",
+      "source_ref": "specs/001-python-api/spec.md",
+      "domain": "",
+      "confidence": 1.0,
+      "confidence_band": "high",
+      "failures": [
+        {
+          "id": "AEE-APY-001-03-IRREDUCIBILITY-CHALLENGE",
+          "claim_id": "APY-001-03",
+          "challenge": "Irreducibility challenge",
+          "breakpoint": "Claim may contain multiple independently falsifiable propositions",
+          "severity": "medium",
+          "category": "coverage_gap",
+          "recovery_hint": "Split the claim into atomic propositions and link them explicitly.",
+          "resolved": false
+        }
+      ],
+      "metadata": {}
+    },
+    {
+      "id": "APY-001-04",
+      "text": "Dead semantics round-trip through the wrapper: withdrawn records leave the default current view and appear in the audit view with status dead, score 0.0, and their reason.",
+      "kind": "requirement",
+      "status": "supported",
+      "boundary": [
+        "Scope: Database.dead + current(include_dead)"
+      ],
+      "depends_on": [],
+      "conflicts_with": [],
+      "evidence": [
+        {
+          "ref": "tests/test_axiomere.py::test_dead_semantics",
+          "kind": "observed",
+          "direction": "supports",
+          "source_quality": "test",
+          "description": "",
+          "source_id": "",
+          "independent_of": [],
+          "observed_at": null,
+          "content_hash": null
+        }
+      ],
+      "assumptions": [],
+      "alternatives": [],
+      "falsification_tests": [
+        "F-APY-4: a record withdrawn via dead() that still appears in current(), or whose audit-view entry lacks status/reason/0.0."
+      ],
+      "uncertainty": "low",
+      "severity": "high",
+      "source_ref": "specs/001-python-api/spec.md",
+      "domain": "",
+      "confidence": 0.9,
+      "confidence_band": "high",
+      "failures": [
+        {
+          "id": "AEE-APY-001-04-IRREDUCIBILITY-CHALLENGE",
+          "claim_id": "APY-001-04",
+          "challenge": "Irreducibility challenge",
+          "breakpoint": "Claim may contain multiple independently falsifiable propositions",
+          "severity": "medium",
+          "category": "coverage_gap",
+          "recovery_hint": "Split the claim into atomic propositions and link them explicitly.",
+          "resolved": false
+        }
+      ],
+      "metadata": {}
+    },
+    {
+      "id": "APY-001-05",
+      "text": "With an actor seed, appends through the wrapper are Ed25519-signed and verify() reports the core's signature check counts.",
+      "kind": "requirement",
+      "status": "supported",
+      "boundary": [
+        "Scope: seed_hex construction paths"
+      ],
+      "depends_on": [],
+      "conflicts_with": [],
+      "evidence": [
+        {
+          "ref": "tests/test_axiomere.py::test_signed_appends_verify (signatures_checked == 1, failed == 0)",
+          "kind": "observed",
+          "direction": "supports",
+          "source_quality": "test",
+          "description": "",
+          "source_id": "",
+          "independent_of": [],
+          "observed_at": null,
+          "content_hash": null
+        }
+      ],
+      "assumptions": [],
+      "alternatives": [],
+      "falsification_tests": [
+        "F-APY-5: a seeded Database whose appends verify with zero signatures checked."
+      ],
+      "uncertainty": "low",
+      "severity": "high",
+      "source_ref": "specs/001-python-api/spec.md",
+      "domain": "",
+      "confidence": 0.9,
+      "confidence_band": "high",
+      "failures": [
+        {
+          "id": "AEE-APY-001-05-IRREDUCIBILITY-CHALLENGE",
+          "claim_id": "APY-001-05",
+          "challenge": "Irreducibility challenge",
+          "breakpoint": "Claim may contain multiple independently falsifiable propositions",
+          "severity": "medium",
+          "category": "coverage_gap",
+          "recovery_hint": "Split the claim into atomic propositions and link them explicitly.",
+          "resolved": false
+        }
+      ],
+      "metadata": {}
+    },
+    {
+      "id": "APY-001-06",
+      "text": "A future release will install with a single pip command (prebuilt wheels bundling the extension), removing the two-repo build step without changing the API.",
+      "kind": "prediction",
+      "status": "draft",
+      "boundary": [
+        "Scope: distribution only (T107)",
+        "Not a v0.1 capability and not described as one in the README"
+      ],
+      "depends_on": [],
+      "conflicts_with": [],
+      "evidence": [
+        {
+          "ref": "README.md install section (two-step build stated openly)",
+          "kind": "asserted",
+          "direction": "supports",
+          "source_quality": "primary",
+          "description": "",
+          "source_id": "",
+          "independent_of": [],
+          "observed_at": null,
+          "content_hash": null
+        }
+      ],
+      "assumptions": [],
+      "alternatives": [],
+      "falsification_tests": [
+        "F-APY-6: a bundled-wheel design that requires API changes or a fallback store to ship."
+      ],
+      "uncertainty": "high",
+      "severity": "high",
+      "source_ref": "specs/001-python-api/spec.md",
+      "domain": "",
+      "confidence": 0.480625,
+      "confidence_band": "medium",
+      "failures": [
+        {
+          "id": "AEE-APY-001-06-IRREDUCIBILITY-CHALLENGE",
+          "claim_id": "APY-001-06",
+          "challenge": "Irreducibility challenge",
+          "breakpoint": "Claim may contain multiple independently falsifiable propositions",
+          "severity": "medium",
+          "category": "coverage_gap",
+          "recovery_hint": "Split the claim into atomic propositions and link them explicitly.",
+          "resolved": false
+        }
+      ],
+      "metadata": {}
+    }
+  ],
+  "scores": {
+    "APY-001-01": {
+      "claim_id": "APY-001-01",
+      "direct_score": 0.845,
+      "propagated_score": 0.845,
+      "band": "high",
+      "components": {
+        "evidence": 0.9,
+        "independence": 0.5,
+        "falsifiability": 1.0,
+        "boundary": 1.0,
+        "contradiction_penalty": 0
+      },
+      "notes": [
+        "Fewer than two independent supporting sources"
+      ]
+    },
+    "APY-001-02": {
+      "claim_id": "APY-001-02",
+      "direct_score": 0.845,
+      "propagated_score": 0.845,
+      "band": "high",
+      "components": {
+        "evidence": 0.9,
+        "independence": 0.5,
+        "falsifiability": 1.0,
+        "boundary": 1.0,
+        "contradiction_penalty": 0
+      },
+      "notes": [
+        "Fewer than two independent supporting sources"
+      ]
+    },
+    "APY-001-03": {
+      "claim_id": "APY-001-03",
+      "direct_score": 1.0,
+      "propagated_score": 1.0,
+      "band": "high",
+      "components": {
+        "evidence": 1.0,
+        "independence": 1.0,
+        "falsifiability": 1.0,
+        "boundary": 1.0,
+        "contradiction_penalty": 0
+      },
+      "notes": []
+    },
+    "APY-001-04": {
+      "claim_id": "APY-001-04",
+      "direct_score": 0.9,
+      "propagated_score": 0.9,
+      "band": "high",
+      "components": {
+        "evidence": 1.0,
+        "independence": 0.5,
+        "falsifiability": 1.0,
+        "boundary": 1.0,
+        "contradiction_penalty": 0
+      },
+      "notes": [
+        "Fewer than two independent supporting sources"
+      ]
+    },
+    "APY-001-05": {
+      "claim_id": "APY-001-05",
+      "direct_score": 0.9,
+      "propagated_score": 0.9,
+      "band": "high",
+      "components": {
+        "evidence": 1.0,
+        "independence": 0.5,
+        "falsifiability": 1.0,
+        "boundary": 1.0,
+        "contradiction_penalty": 0
+      },
+      "notes": [
+        "Fewer than two independent supporting sources"
+      ]
+    },
+    "APY-001-06": {
+      "claim_id": "APY-001-06",
+      "direct_score": 0.480625,
+      "propagated_score": 0.480625,
+      "band": "medium",
+      "components": {
+        "evidence": 0.2375,
+        "independence": 0.5,
+        "falsifiability": 1.0,
+        "boundary": 1.0,
+        "contradiction_penalty": 0
+      },
+      "notes": [
+        "No observed supporting evidence",
+        "Fewer than two independent supporting sources"
+      ]
+    }
+  },
+  "recoveries": [
+    {
+      "failure_id": "AEE-APY-001-01-IRREDUCIBILITY-CHALLENGE",
+      "claim_id": "APY-001-01",
+      "strategy": "decompose",
+      "action": "Split the claim into atomic propositions and link them explicitly.",
+      "priority": 3,
+      "verification": "Every resulting claim contains one independently falsifiable proposition."
+    },
+    {
+      "failure_id": "AEE-APY-001-02-IRREDUCIBILITY-CHALLENGE",
+      "claim_id": "APY-001-02",
+      "strategy": "decompose",
+      "action": "Split the claim into atomic propositions and link them explicitly.",
+      "priority": 3,
+      "verification": "Every resulting claim contains one independently falsifiable proposition."
+    },
+    {
+      "failure_id": "AEE-APY-001-02-NEGATION-CONFLICT-CHALLE",
+      "claim_id": "APY-001-02",
+      "strategy": "resolve_contradiction",
+      "action": "Confirm whether the claims share a boundary and preserve both pending review.",
+      "priority": 3,
+      "verification": "Both positions remain recorded; discriminating evidence resolves or scopes them."
+    },
+    {
+      "failure_id": "AEE-APY-001-03-IRREDUCIBILITY-CHALLENGE",
+      "claim_id": "APY-001-03",
+      "strategy": "decompose",
+      "action": "Split the claim into atomic propositions and link them explicitly.",
+      "priority": 3,
+      "verification": "Every resulting claim contains one independently falsifiable proposition."
+    },
+    {
+      "failure_id": "AEE-APY-001-04-IRREDUCIBILITY-CHALLENGE",
+      "claim_id": "APY-001-04",
+      "strategy": "decompose",
+      "action": "Split the claim into atomic propositions and link them explicitly.",
+      "priority": 3,
+      "verification": "Every resulting claim contains one independently falsifiable proposition."
+    },
+    {
+      "failure_id": "AEE-APY-001-05-IRREDUCIBILITY-CHALLENGE",
+      "claim_id": "APY-001-05",
+      "strategy": "decompose",
+      "action": "Split the claim into atomic propositions and link them explicitly.",
+      "priority": 3,
+      "verification": "Every resulting claim contains one independently falsifiable proposition."
+    },
+    {
+      "failure_id": "AEE-APY-001-06-IRREDUCIBILITY-CHALLENGE",
+      "claim_id": "APY-001-06",
+      "strategy": "decompose",
+      "action": "Split the claim into atomic propositions and link them explicitly.",
+      "priority": 3,
+      "verification": "Every resulting claim contains one independently falsifiable proposition."
+    }
+  ],
+  "metadata": {
+    "threshold": 0.7,
+    "input": "specs/001-python-api/aee-claims.json"
+  }
+}
