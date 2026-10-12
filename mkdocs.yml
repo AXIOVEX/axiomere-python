@@ -1,0 +1,37 @@
+site_name: Axiomere (Python)
+site_description: "Axiomere from Python — an append-only, signed, hash-chained record store: records are revised by snapshots and never deleted."
+site_url: https://axiomere.readthedocs.io/en/latest/
+repo_url: https://github.com/AXIOVEX/axiomere-python
+repo_name: AXIOVEX/axiomere-python
+copyright: "MIT. © 2026 Axiovex Systems, LLC."
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+  palette:
+    - scheme: default
+      primary: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+markdown_extensions:
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - "The .axmr format": format.md
+  - Python API: api.md
+  - Verification: verification.md
+  - Float canonicalization: float-canonicalization.md
