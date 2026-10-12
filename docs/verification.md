@@ -37,7 +37,8 @@ verification refuses to `open` for appends.
   *self-consistency*. Checking them against a caller-supplied
   trusted-key map is what establishes *identity*.
 - Verification alone does not protect against a sole-copy operator
-  recomputing a chain from genesis. That is what **layer 5 —
+  recomputing a chain from the very first event (from genesis). That
+  is what **layer 5 —
   external anchoring** of Merkle checkpoint roots — is for: deposit
   the root where the operator does not control it (a DOI-minting
   repository, a timestamp authority, a transparency log), and

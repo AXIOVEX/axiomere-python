@@ -6,8 +6,10 @@ untampered ledger fails its own verification.
 
 ## The defect
 
-The core's reader once parsed decimals needing ≥17 significant digits
-**1 ULP high** — serde_json without its `float_roundtrip` feature
+The core's reader once read decimals needing ≥17 significant digits
+back **one smallest step too high** (1 ULP — one unit in the last
+place, the finest step the number format can take) — serde_json
+without its `float_roundtrip` feature
 does not guarantee correctly rounded parsing. The consequence was
 the worst kind for a truth ledger: a log written honestly, through
 this very package, **failed hash verification on reopen**, with no
