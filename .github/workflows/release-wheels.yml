@@ -73,6 +73,10 @@ jobs:
             yum install -y libatomic && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs
             | sh -s -- -y --default-toolchain stable --profile minimal
           CIBW_ENVIRONMENT_LINUX: 'PATH="$HOME/.cargo/bin:$PATH"'
+          # The Rust extension's minimum macOS target is 10.12; without
+          # this, the x86_64 wheel targets 10.9 and delocate refuses the
+          # mismatch (proving run 38460717489).
+          CIBW_ENVIRONMENT_MACOS: 'MACOSX_DEPLOYMENT_TARGET=10.12'
           # Smoke-test each built wheel: the extension must import and
           # answer a keypair generation before the wheel is kept.
           CIBW_TEST_COMMAND: >-
