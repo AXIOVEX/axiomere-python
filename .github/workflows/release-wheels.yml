@@ -1,0 +1,131 @@
+name: Release wheels
+
+# Multi-platform wheel matrix for the Axiomere Python distributions.
+#
+# Two distributions exist by design:
+#   * `axiomere`     — this repo: the pure-Python wrapper (hatchling,
+#                      py3-none-any wheel + sdist). Already publishable.
+#   * `axiomere-py`  — AXIOVEX/axiomere, crates/axiomere-py: the native
+#                      PyO3 extension `_axiomere` (maturin). The wrapper
+#                      imports it and refuses to import without it, so
+#                      most users need a prebuilt extension wheel for
+#                      their platform instead of a local Rust toolchain.
+#
+# A locally built extension wheel is tagged `linux_x86_64`, which PyPI
+# rejects. This workflow builds the extension with cibuildwheel across
+# the platform/Python matrix so future releases can ship proper
+# manylinux / macOS / Windows wheels.
+#
+# Status: prepared for review. It has NOT been run yet — expect a
+# shakedown run (workflow_dispatch) and small fixes before the first
+# tagged release uses it. The publish job is dispatch/tag gated and
+# expects PyPI Trusted Publishing (OIDC) to be configured for both
+# projects; no API tokens are stored in this repo.
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-extension-wheels:
+    name: Extension wheels (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-13, macos-14]
+    steps:
+      - name: Check out the Rust core (bindings source)
+        uses: actions/checkout@v4
+        with:
+          repository: AXIOVEX/axiomere
+          path: axiomere-core
+          # Pin this to the core commit a release is built against
+          # (e.g. the commit whose float_roundtrip fix the wrapper's
+          # regression test pins). Left unpinned = core main at run time.
+          # ref: <core-commit>
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # cibuildwheel builds Linux wheels inside manylinux containers,
+      # where the runner's Rust toolchain is not visible — install
+      # rustup inside the container via before-all (see env below).
+      # macOS/Windows build on the runner itself:
+      - name: Install Rust (macOS/Windows runners)
+        if: runner.os != 'Linux'
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build extension wheels with cibuildwheel
+        uses: pypa/cibuildwheel@v2.21
+        with:
+          package-dir: axiomere-core/crates/axiomere-py
+          output-dir: wheelhouse
+        env:
+          CIBW_BUILD: "cp310-* cp311-* cp312-* cp313-*"
+          CIBW_SKIP: "*-musllinux_* pp*"
+          CIBW_BEFORE_ALL_LINUX: >-
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs
+            | sh -s -- -y --default-toolchain stable --profile minimal
+          CIBW_ENVIRONMENT_LINUX: 'PATH="$HOME/.cargo/bin:$PATH"'
+          # Smoke-test each built wheel: the extension must import and
+          # answer a keypair generation before the wheel is kept.
+          CIBW_TEST_COMMAND: >-
+            python -c "import _axiomere; seed, pub = _axiomere.generate_keypair(); assert len(seed) == 64 and len(pub) == 64"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: extension-wheels-${{ matrix.os }}
+          path: wheelhouse/*.whl
+
+  build-wrapper:
+    name: Wrapper sdist + wheel (this repo)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build
+        run: |
+          pip install build
+          python -m build --outdir dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wrapper-dist
+          path: dist/*
+
+  publish:
+    name: Publish to PyPI (tags only)
+    needs: [build-extension-wheels, build-wrapper]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    # Trusted Publishing: configure an OIDC publisher for the
+    # `axiomere` and `axiomere-py` projects on PyPI pointing at this
+    # workflow, then grant this job `id-token: write`. Until that is
+    # configured this job will fail at the publish step by design.
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: all-dist
+          merge-multiple: true
+      - name: Split artifacts by project
+        run: |
+          mkdir -p pub-wrapper pub-extension
+          # Wrapper: axiomere-* ; extension wheels: axiomere_py-*
+          mv all-dist/axiomere-*.tar.gz all-dist/axiomere-*.whl pub-wrapper/ 2>/dev/null || true
+          mv all-dist/axiomere_py-*.whl pub-extension/ 2>/dev/null || true
+          ls -la pub-wrapper pub-extension
+      - name: Publish wrapper (axiomere)
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: pub-wrapper
+      - name: Publish extension wheels (axiomere-py)
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: pub-extension
