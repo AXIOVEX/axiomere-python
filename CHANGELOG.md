@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The wheel workflow's Linux setup now installs a small system library (libatomic) that the Rust installer needs inside the 32-bit build container — without it, that build stopped before compiling anything.
 - The Intel Mac build now uses GitHub's current Intel runner (macos-15-intel) instead of the retired macos-13, which left builds waiting forever.
+- The Intel Mac wheel build now sets its minimum macOS version to 10.12, matching what the compiled extension actually requires — before this, the build aimed at an older minimum (10.9) than the extension allows, and the wheel repair step refused to finish it.
 
 ## [0.1.0] - 2026-10-13
 
