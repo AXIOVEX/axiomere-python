@@ -16,11 +16,13 @@ name: Release wheels
 # the platform/Python matrix so future releases can ship proper
 # manylinux / macOS / Windows wheels.
 #
-# Status: prepared for review. It has NOT been run yet — expect a
-# shakedown run (workflow_dispatch) and small fixes before the first
-# tagged release uses it. The publish job is dispatch/tag gated and
-# expects PyPI Trusted Publishing (OIDC) to be configured for both
-# projects; no API tokens are stored in this repo.
+# Status: first practice run 2026-10-13 (workflow_dispatch). It found
+# two faults: the 32-bit Linux build container does not ship libatomic,
+# which the rustup installer needs (the x86_64 wheels all built), and
+# the macos-13 runner image has been retired by GitHub, so that leg
+# waited forever. Both are fixed in this version. The publish job is
+# dispatch/tag gated and expects PyPI Trusted Publishing (OIDC) to be
+# configured for both projects; no API tokens are stored in this repo.
 
 on:
   workflow_dispatch:
@@ -35,7 +37,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-13, macos-14]
+        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-15-intel, macos-14]
     steps:
       - name: Check out the Rust core (bindings source)
         uses: actions/checkout@v4
@@ -68,7 +70,7 @@ jobs:
           CIBW_BUILD: "cp310-* cp311-* cp312-* cp313-*"
           CIBW_SKIP: "*-musllinux_* pp*"
           CIBW_BEFORE_ALL_LINUX: >-
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs
+            yum install -y libatomic && curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs
             | sh -s -- -y --default-toolchain stable --profile minimal
           CIBW_ENVIRONMENT_LINUX: 'PATH="$HOME/.cargo/bin:$PATH"'
           # Smoke-test each built wheel: the extension must import and

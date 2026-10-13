@@ -9,7 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- A multi-platform wheel-building workflow (cibuildwheel across Linux, Windows, and macOS), prepared for future releases; its first practice run is in progress, and one Linux build leg failed and is being diagnosed.
+- A multi-platform wheel-building workflow (cibuildwheel across Linux, Windows, and macOS), prepared for future releases.
+
+### Fixed
+
+- The wheel workflow's Linux setup now installs a small system library (libatomic) that the Rust installer needs inside the 32-bit build container — without it, that build stopped before compiling anything.
+- The Intel Mac build now uses GitHub's current Intel runner (macos-15-intel) instead of the retired macos-13, which left builds waiting forever.
 
 ## [0.1.0] - 2026-10-13
 
