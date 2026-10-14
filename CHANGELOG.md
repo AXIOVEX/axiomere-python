@@ -9,9 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- A multi-platform wheel-building workflow (cibuildwheel across Linux, Windows, and macOS), prepared for future releases.
+- A verification policy for `Database.verify()` and `axiomere.verify_file()`, matching the core's Spec 003 (verification policy). Pass `trusted={actor: public_key_hex}` to check signatures against your own key map — the identity check: every actor must be named in the map and every event signed with that actor's key, and the result names any actor the map does not cover. Pass `expected_head={...}` to pin the end of the ledger (last event's hash, minimum event count, latest checkpoint root) — the only way a shortened copy of a ledger is caught, since a shorter copy is still a valid chain on its own. Verification also gains the checks the policy adds underneath: checkpoint roots are recomputed rather than taken from the file's own claim, and a signed ledger fails if any of its events is missing its signature.
+- Regression tests for the verification policy at the Python surface: a checkpoint root transplanted from another ledger fails even when re-signed by its true author, stripped signatures fail, an actor missing from the trusted map is reported by name, a truncated ledger fails under a head pin, and values that cannot be stored exactly are refused.
+
+### Changed
+
+- `axiomere.verify_file()` now returns the full `Verification` result — the same eight fields `Database.verify()` returns, including the list of unsigned events and any untrusted actors — instead of a three-item `(ok, count, reason)` tuple. A malformed or unreadable file comes back as a failed result with a named reason instead of raising or answering in part.
 
 ### Fixed
+
+- Appending a payload that carries a value which cannot be stored exactly — NaN, positive or negative infinity, or an integer outside the exactly representable range — now raises `ValueError` and appends nothing. Before, the native extension silently stored NaN as null and rounded very large integers, so the file on disk was not what the caller submitted.
 
 - The wheel workflow's Linux setup now installs a small system library (libatomic) that the Rust installer needs inside the 32-bit build container — without it, that build stopped before compiling anything.
 - The Intel Mac build now uses GitHub's current Intel runner (macos-15-intel) instead of the retired macos-13, which left builds waiting forever.

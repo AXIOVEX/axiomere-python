@@ -50,8 +50,8 @@ def test_reproduction_payload_verifies_on_reopen(tmp_path):
     v = reopened.verify()
     assert v.ok and v.events == 1
 
-    ok, count, reason = axiomere.verify_file(p)
-    assert ok and count == 1 and reason is None
+    v = axiomere.verify_file(p)
+    assert v.ok and v.events == 1 and v.reason is None
 
     content = reopened.current()["reading"]["content"]
     assert _bits(content["ts_like"]) == _bits(REPRODUCTION["ts_like"])
@@ -69,8 +69,8 @@ def test_trigger_float_sweep_verifies_on_reopen(tmp_path):
     v = reopened.verify()
     assert v.ok and v.events == 1
 
-    ok, count, reason = axiomere.verify_file(p)
-    assert ok and count == 1 and reason is None
+    v = axiomere.verify_file(p)
+    assert v.ok and v.events == 1 and v.reason is None
 
     content = reopened.current()["sweep"]["content"]
     for key, original in payload.items():

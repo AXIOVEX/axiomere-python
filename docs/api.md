@@ -62,17 +62,42 @@ ledger.events()                     # the full event list
 ```python
 result = ledger.verify()
 # Verification(ok=True, events=3, break_seq=None, reason=None,
-#              signatures_checked=3, signatures_failed=0)
+#              signatures_checked=3, signatures_failed=0,
+#              unsigned_events=(), untrusted_actors=())
 
-ok, count, reason = axiomere.verify_file("study.axmr")   # standalone, no Database needed
+result = axiomere.verify_file("study.axmr")   # standalone, no Database needed
 ```
 
-`Verification` is a frozen dataclass (an immutable result object):
-`ok`, `events`, `break_seq`
-(the sequence number where the chain breaks, if it does), `reason`,
-`signatures_checked`, `signatures_failed`. See
-[Verification](verification.md) for what is checked and what a
-failure means.
+`Verification` is a frozen dataclass (an immutable result object)
+with the same eight fields on every surface: `ok`, `events`,
+`break_seq` (the sequence number where the chain breaks, if it
+does), `reason`, `signatures_checked`, `signatures_failed`,
+`unsigned_events` (sequence numbers of events carrying no
+signature), and `untrusted_actors` (actors a trusted-mode check
+refused to vouch for).
+
+Both entry points take the same two keyword arguments:
+
+```python
+ledger.verify(trusted={"researcher": public_key_hex})
+axiomere.verify_file("study.axmr", expected_head={"min_events": 42})
+```
+
+- `trusted` — `None` (the default) checks signatures against the
+  keys embedded in the events (self-consistency). A dict of
+  `{actor: public_key_hex}` checks them against *your* map instead:
+  every actor must be named in it, and every event must be signed
+  with that actor's mapped key — that is the identity check. An
+  empty dict trusts nobody and is not the same as `None`.
+- `expected_head` — a dict with any of `head_hash`, `min_events`,
+  `checkpoint_root`, pinning what the end of the ledger must look
+  like. Without a pin, a shortened copy of a ledger still verifies —
+  a prefix of a valid chain is a valid chain.
+
+`verify_file` returns its verdict the same way: a malformed or
+unreadable file comes back as `ok=False` with a named `reason`,
+never as an exception. See [Verification](verification.md) for what
+is checked and what a failure means.
 
 ## What is not here
 

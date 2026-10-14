@@ -13,10 +13,44 @@ AXMR1
 - **One event per line, canonical JSON** — object keys sorted
   recursively, compact separators. Hashing is defined over this
   encoding, so independent implementations can verify each other's
-  files byte-for-byte.
+  files byte-for-byte. The encoding is pinned in full below, and
+  verification enforces it: a line that parses to the right event
+  but is not spelled the canonical way fails verification.
 - **Appends are fsync'd.**
 - A future binary framing must preserve the same event model and hash
   definitions.
+
+## The canonical encoding, pinned
+
+These rules are the whole contract — an implementation that follows
+them produces and verifies the same files as the reference:
+
+- **Objects:** keys sorted lexicographically (byte order),
+  recursively; compact separators — no whitespace anywhere.
+- **Strings:** emitted as raw UTF-8. Only `"` (as `\"`), `\` (as
+  `\\`), and the control characters U+0000–U+001F are escaped — the
+  short escapes `\b \t \n \f \r` where JSON defines them, otherwise
+  `\u00XX` with lowercase hex. Nothing else is escaped: non-ASCII
+  characters (é, ☕, €) appear literally.
+- **Numbers:** integers are exact, in plain decimal. Non-integers
+  use the shortest decimal that round-trips to the same value, in
+  plain form (`0.30000000000000004`, `1.0`, `-0.0`) or exponent form
+  where the reference chooses it — the exponent always signed and
+  never zero-padded (`1e-7`, `5e-324`, `1e+21`, never `1e-07`).
+  Parsing must be correctly rounded (round-to-nearest-even), so a
+  written decimal reads back as the identical value.
+- **Event hash:** `SHA-256(prev_hash ‖ canonical(body))`, where
+  `prev_hash` enters as its 64-character lowercase hex *text* (not
+  raw bytes) and the body is the canonical encoding of
+  `{seq, type, ts, actor, payload, prev_hash}`. The genesis event's
+  `prev_hash` is 64 zeros.
+- **Merkle root:** the leaves are event-hash hex strings; a parent
+  is `SHA-256(left_hex ‖ right_hex)` over the hex text; an odd
+  element is paired with itself; a single element is its own root;
+  the empty set's root is `SHA-256("")`.
+- **Snapshot id:** `SHA-256(canonical({"content": <content>,
+  "parent": <parent-or-null>}))` — the canonical encoding of that
+  two-key object, hashed.
 
 ## The event
 
@@ -36,9 +70,9 @@ Every event carries:
 ## Records are lineages
 
 - A **record** is a lineage of **snapshots**.
-- A **snapshot** is content-addressed:
-  `snapshot_id = SHA-256(content + parent_snapshot_id)`; the first
-  snapshot's parent is null.
+- A **snapshot** is content-addressed: its id is the hash of its
+  content and its parent's id, under the pinned construction above;
+  the first snapshot's parent is null.
 - **Revision** = a new snapshot. The old one is *superseded* and stays
   readable.
 - **Withdrawal** = a new snapshot with `status: "dead"`, a mandatory
