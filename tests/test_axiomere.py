@@ -40,8 +40,8 @@ def test_tampered_file_fails_verify_file(tmp_path):
     db.snapshot("r", {"claim": "original"}, actor="alice")
     text = p.read_text().replace("original", "FORGED!!")
     p.write_text(text)
-    ok, count, reason = axiomere.verify_file(str(p))
-    assert not ok and reason == "hash-mismatch" and count == 1
+    v = axiomere.verify_file(str(p))
+    assert not v.ok and v.reason == "hash-mismatch" and v.events == 1
 
 
 def test_broken_log_refuses_to_open(tmp_path):
