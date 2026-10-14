@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `axiomere.verify_file()` now returns the full `Verification` result — the same eight fields `Database.verify()` returns, including the list of unsigned events and any untrusted actors — instead of a three-item `(ok, count, reason)` tuple. A malformed or unreadable file comes back as a failed result with a named reason instead of raising or answering in part.
+- (2026-10-13) The wheel workflow now builds the extension against one pinned Axiomere core commit — `cc452998c7bdbdd3fae50964733fef5f9bed0d3e`, the Spec 003 verification-policy build — instead of whatever core main happened to be at run time, so a release's core is a recorded fact rather than an accident of timing. The pinned commit lives in the workflow file; there is no clean way to stamp it into the wheel metadata itself, because the build tool takes wheel metadata from the core repository's own manifests.
+- (2026-10-13) Every GitHub Action used by this repository's workflows is pinned by commit SHA, with the version it was resolved from kept as a comment. That includes the publish action, which previously floated on the `release/v1` branch name inside the job that holds the publish permission.
+- (2026-10-13) The wheel workflow's smoke test now runs a real signed round trip — create a ledger under a fresh key, append an event, take a snapshot, checkpoint, then verify with signatures checked and verify the written file standalone — instead of only importing the extension and generating a keypair.
 
 ### Fixed
 
