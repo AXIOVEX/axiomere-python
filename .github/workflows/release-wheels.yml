@@ -23,6 +23,13 @@ name: Release wheels
 # waited forever. Both are fixed in this version. The publish job is
 # dispatch/tag gated and expects PyPI Trusted Publishing (OIDC) to be
 # configured for both projects; no API tokens are stored in this repo.
+#
+# WS-7 hardening (2026-10-13, red-team findings RTE-11/RTE-12/RTE-14):
+# the core checkout below is pinned to one exact commit instead of
+# floating on core main; every action in this repo's workflows is
+# pinned by commit SHA (the version each SHA was resolved from is
+# kept as a trailing comment); and the wheel smoke test runs a full
+# signed round trip instead of an import-only check.
 
 on:
   workflow_dispatch:
@@ -40,16 +47,18 @@ jobs:
         os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-15-intel, macos-14]
     steps:
       - name: Check out the Rust core (bindings source)
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: AXIOVEX/axiomere
           path: axiomere-core
-          # Pin this to the core commit a release is built against
-          # (e.g. the commit whose float_roundtrip fix the wrapper's
-          # regression test pins). Left unpinned = core main at run time.
-          # ref: <core-commit>
+          # Pinned to the exact core commit this release line is built
+          # against: Axiomere Spec 003 (verification policy), core main
+          # as of 2026-10-13. Bump this deliberately, in the same change
+          # that re-tests the wrapper against the new core — never let
+          # it float on core main (RTE-11).
+          ref: cc452998c7bdbdd3fae50964733fef5f9bed0d3e
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
 
@@ -59,10 +68,14 @@ jobs:
       # macOS/Windows build on the runner itself:
       - name: Install Rust (macOS/Windows runners)
         if: runner.os != 'Linux'
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+        with:
+          # Named explicitly because the action is SHA-pinned: pinned
+          # by commit, the toolchain can no longer be read off the ref.
+          toolchain: stable
 
       - name: Build extension wheels with cibuildwheel
-        uses: pypa/cibuildwheel@v2.21
+        uses: pypa/cibuildwheel@7940a4c0e76eb2030e473a5f864f291f63ee879b # v2.21
         with:
           package-dir: axiomere-core/crates/axiomere-py
           output-dir: wheelhouse
@@ -77,12 +90,16 @@ jobs:
           # this, the x86_64 wheel targets 10.9 and delocate refuses the
           # mismatch (proving run 38460717489).
           CIBW_ENVIRONMENT_MACOS: 'MACOSX_DEPLOYMENT_TARGET=10.12'
-          # Smoke-test each built wheel: the extension must import and
-          # answer a keypair generation before the wheel is kept.
+          # Smoke-test each built wheel with a real signed round trip
+          # before the wheel is kept: create a ledger under a fresh
+          # key, append an event, take a snapshot, checkpoint, then
+          # verify in trusted mode (every signature checked against
+          # the key map) and verify the written file standalone. An
+          # extension that merely imports is not enough (RTE-12).
           CIBW_TEST_COMMAND: >-
-            python -c "import _axiomere; seed, pub = _axiomere.generate_keypair(); assert len(seed) == 64 and len(pub) == 64"
+            python -c "import _axiomere, os, tempfile; seed, pub = _axiomere.generate_keypair(); p = os.path.join(tempfile.mkdtemp(), 'smoke.axmr'); db = _axiomere.create_with_seed(p, seed); db.append('smoke.event', {'n': 1}, 'smoke'); db.snapshot('smoke-rec', {'v': 1}, 'smoke'); db.checkpoint('smoke'); v = db.verify(trusted={'smoke': pub}); assert v['ok'] and v['signatures_checked'] == v['events'], v; f = _axiomere.verify_file(p, trusted={'smoke': pub}); assert f['ok'], f; print('signed round trip ok:', v['events'], 'events,', v['signatures_checked'], 'signatures checked')"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: extension-wheels-${{ matrix.os }}
           path: wheelhouse/*.whl
@@ -91,15 +108,15 @@ jobs:
     name: Wrapper sdist + wheel (this repo)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: "3.12"
       - name: Build
         run: |
           pip install build
           python -m build --outdir dist
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: wrapper-dist
           path: dist/*
@@ -116,7 +133,7 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           path: all-dist
           merge-multiple: true
@@ -128,10 +145,10 @@ jobs:
           mv all-dist/axiomere_py-*.whl pub-extension/ 2>/dev/null || true
           ls -la pub-wrapper pub-extension
       - name: Publish wrapper (axiomere)
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
         with:
           packages-dir: pub-wrapper
       - name: Publish extension wheels (axiomere-py)
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
         with:
           packages-dir: pub-extension
