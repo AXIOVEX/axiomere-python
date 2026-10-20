@@ -35,7 +35,7 @@ except ImportError as exc:  # pragma: no cover
         "maturin develop -m axiomere/crates/axiomere-py/Cargo.toml"
     ) from exc
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __all__ = ["Database", "Verification", "generate_keypair", "verify_file"]
 
 
