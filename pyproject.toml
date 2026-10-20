@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "axiomere"
-version = "0.1.0"
+version = "0.2.0"
 description = "Python API for Axiomere — a truth ledger: append-only, signed, hash-chained records that are revised by snapshots and never deleted."
 readme = "README.md"
 license = "MIT"

@@ -52,11 +52,11 @@ jobs:
           repository: AXIOVEX/axiomere
           path: axiomere-core
           # Pinned to the exact core commit this release line is built
-          # against: Axiomere Spec 003 (verification policy), core main
-          # as of 2026-10-13. Bump this deliberately, in the same change
-          # that re-tests the wrapper against the new core — never let
-          # it float on core main (RTE-11).
-          ref: cc452998c7bdbdd3fae50964733fef5f9bed0d3e
+          # against: the Axiomere 0.2.0 release commit (Spec 003
+          # verification policy). Bump this deliberately, in the same
+          # change that re-tests the wrapper against the new core —
+          # never let it float on core main (RTE-11).
+          ref: f685e58a5670e29f706b6f0201ba0d8f1e5ab137
 
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
